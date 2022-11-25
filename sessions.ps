@@ -1,16 +1,14 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © somtuzyonyeka
 
-//@version=1
-// This indicator uses West African time & takes notes of the breaks in-between wwhen tradinf forex pairs. 
-// The second part of the session after the break is the Xs.
+//@version=5
 
 indicator("Sessions Xs", overlay=true)
 
 bgColor = input.bool(false, "Activate High/Low View")
 
+FrankfurtColor = color.new(color.purple, 90)
 LondonColor = color.new(color.green, 90)
-LondonColorXs = color.new(color.green, 90)
 NYColor = color.new(color.red, 90)
 NYColorXs = color.new(color.red, 90)
 AsiaColor = color.new(color.yellow, 90)
@@ -18,11 +16,11 @@ AsiaColorXs = color.new(color.yellow, 90)
 SydneyColor = color.new(color.blue, 90)
 SydneyColorXs = color.new(color.blue, 90)
 
-///Sessions & Time
+///Sessions
 
 res = input.timeframe("D", "Resolution", ["D","W","M"])
+frankfurt = input.session("0700-1030:1234567", "Frankfurt Session")
 london = input.session("0300-0530:1234567", "London Session")
-londonXs = input.session("0800-1030:1234567", "LondonXs Session")
 ny = input.session("0800-1030:1234567", "New York Session")
 nyXs = input.session("1300-1700:1234567", "NewYorkXs Session")
 tokyo = input.session("2000-2230:1234567", "Tokyo Session")
@@ -40,7 +38,42 @@ is_session(sess) =>
     not na(time(timeframe.period, sess, "UTC+1"))
     
 
-//London Session
+
+//Frankfurt Session
+
+Frankfurt = input.bool(true, "Frankfurt Session")
+
+frankfurtNewbar = is_newbar(frankfurt)
+frankfurtSession = is_session(frankfurt)
+
+float frankfurtLow = na
+frankfurtLow := if frankfurtSession
+    if frankfurtNewbar
+        low
+    else
+        math.min(frankfurtLow[1],low)
+else
+    frankfurtLow
+
+float frankfurtHigh = na
+frankfurtHigh := if frankfurtSession
+    if frankfurtNewbar
+        high
+    else
+        math.max(frankfurtHigh[1],high)
+else
+    frankfurtHigh
+
+
+plotFL = plot(frankfurtLow, color=color.new(#000000, 100))
+plotFH = plot(frankfurtHigh, color=color.new(#000000, 100))
+fill(plotFL, plotFH, color = frankfurtSession and Frankfurt and bgColor ? FrankfurtColor : na)
+
+bgcolor(frankfurtSession and Frankfurt and not bgColor ? FrankfurtColor : na)
+
+
+
+//London
 
 London = input.bool(true, "London Session")
 
@@ -73,42 +106,7 @@ fill(plotLL, plotLH, color = londonSession and London and bgColor ? LondonColor 
 bgcolor(londonSession and London and not bgColor ? LondonColor : na)
 
 
-
-//LondonXs Session
-
-LondonXs = input.bool(true, "LondonXs Session")
-
-londonXsNewbar = is_newbar(londonXs)
-londonXsSession = is_session(londonXs)
-
-float londonXsLow = na
-londonXsLow := if londonXsSession
-    if londonXsNewbar
-        low
-    else
-        math.min(londonXsLow[1],low)
-else
-    londonXsLow
-
-float londonXsHigh = na
-londonXsHigh := if londonXsSession
-    if londonXsNewbar
-        high
-    else
-        math.max(londonXsHigh[1],high)
-else
-    londonXsHigh
-
-
-plotLXsL = plot(londonXsLow, color=color.new(#000000, 100))
-plotLXsH = plot(londonXsHigh, color=color.new(#000000, 100))
-fill(plotLXsL, plotLXsH, color = londonXsSession and LondonXs and bgColor ? LondonColorXs : na)
-
-bgcolor(londonXsSession and LondonXs and not bgColor ? LondonColorXs : na)
-
-
-
-//New York Session
+//New York
 
 NY = input.bool(true, "New York Session")
 
@@ -141,7 +139,7 @@ fill(plotNYL, plotNYH, color = nySession and NY and bgColor ? NYColor : na)
 bgcolor(nySession and NY and not bgColor ? NYColor : na)
 
 
-//NewYorkXs Session
+//NewYorkXs
 
 NYXs = input.bool(true, "NewYorkXs Session")
 
@@ -175,7 +173,7 @@ bgcolor(nyXsSession and NYXs and not bgColor ? NYColorXs : na)
 
 
 
-//Tokyo Session
+//Tokyo
 
 Tokyo = input.bool(true, "Tokyo Session")
 
@@ -208,7 +206,7 @@ fill(plotTL, plotTH, color = tokyoSession and Tokyo and bgColor ? AsiaColor : na
 bgcolor(tokyoSession and Tokyo and not bgColor ? AsiaColor : na)
 
 
-//TokyoXs Session
+//TokyoXs
 
 TokyoXs = input.bool(true, "TokyoXs Session")
 
@@ -242,7 +240,7 @@ bgcolor(tokyoXsSession and TokyoXs and not bgColor ? AsiaColorXs : na)
 
 
 
-//Sydney Session
+//Sydney
 
 Sydney = input.bool(false, "Sydney Session")
 
@@ -276,7 +274,7 @@ bgcolor(sydneySession and Sydney and not bgColor ? SydneyColor : na)
 
 
 
-//SydneyXs Sesssion
+//SydneyXs
 
 SydneyXs = input.bool(false, "SydneyXs Session")
 
